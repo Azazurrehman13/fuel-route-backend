@@ -11,12 +11,12 @@ load_dotenv(BASE_DIR / ".env")
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-wpdp$-o$9mkm6i4984kmw$nwxe^5427dks-h9$^x8k5^dg_06z'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-wpdp$-o$9mkm6i4984kmw$nwxe^5427dks-h9$^x8k5^dg_06z')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') if os.environ.get('ALLOWED_HOSTS') else []
 
 
 # Application definition
@@ -55,6 +55,7 @@ ROUTE_CORRIDOR_MILES = 8
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -64,12 +65,14 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# Origins allowed to call this API from the browser (the React dev server).
-# Add your production frontend's origin here too once you deploy.
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-]
+# Origins allowed to call this API from the browser.
+# In dev this defaults to the Vite dev server; in production, set
+# CORS_ALLOWED_ORIGINS as an env var to your deployed frontend's URL.
+CORS_ALLOWED_ORIGINS = (
+    os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
+    if os.environ.get('CORS_ALLOWED_ORIGINS')
+    else ['http://localhost:5173', 'http://127.0.0.1:5173']
+)
 
 ROOT_URLCONF = 'fuel_route_api.urls'
 
@@ -137,3 +140,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STORAGES = {
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
